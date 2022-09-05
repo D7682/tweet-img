@@ -21,7 +21,8 @@ func RandomSeed() int {
 func main() {
 	urls := []string{
 		"https://picsum.photos/2560/1440",
-		"https://cataas.com/cat?width=2560&height=1440",
+		// "https://cataas.com/cat?width=2560&height=1440",
+		"https://picsum.photos/1920/1080",
 	}
 
 	seed := RandomSeed()

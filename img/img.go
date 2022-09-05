@@ -170,8 +170,7 @@ func Join(img1, img2 Image) (*Image, error) {
 	draw.Draw(rgba, r2, img2.data, image.Point{0, 0}, draw.Src)
 
 	g := gift.New(
-		gift.Sepia(40),
-		gift.Colorize(175, 50, 60),
+		gift.Invert(),
 		gift.Gamma(0.5),
 	)
 

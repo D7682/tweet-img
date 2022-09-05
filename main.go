@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image-manipulation/img"
 	"image-manipulation/utils"
 	"log"
@@ -43,7 +44,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	time.Sleep(time.Second * 1)
+	fmt.Println("running")
+	fmt.Println("running")
 	err = joined.Write()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("running")
+	err = joined.Send()
 	if err != nil {
 		log.Fatal(err)
 	}

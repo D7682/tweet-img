@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image-manipulation/img"
 	"image-manipulation/utils"
 	"log"
@@ -18,10 +17,27 @@ func RandomSeed() int {
 	return randomInt
 }
 
+/* func UI() {
+	a := app.New()
+	w := a.NewWindow("Hello")
+
+	hello := widget.NewLabel("Hello Fyne!")
+	w.SetContent(container.NewVBox(
+		hello,
+		widget.NewButton("Hi!", func() {
+			hello.SetText("Welcome :)")
+		}),
+	))
+
+	w.ShowAndRun()
+} */
+
 func main() {
+	// UI()
 	urls := []string{
 		"https://picsum.photos/2560/1440",
-		"https://cataas.com/cat?width=2560&height=1440",
+		"https://thecatapi.com/api/images/get?format=src&type=image&mime_types=jpg&size=full",
+		//"https://cataas.com/cat?width=2560&height=1440",
 		// "https://picsum.photos/1920/1080",
 	}
 
@@ -46,14 +62,11 @@ func main() {
 	}
 
 	time.Sleep(time.Second * 1)
-	fmt.Println("running")
-	fmt.Println("running")
 	err = joined.Write()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("running")
 	err = joined.Send()
 	if err != nil {
 		log.Fatal(err)

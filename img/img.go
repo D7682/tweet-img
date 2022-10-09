@@ -1,13 +1,11 @@
 package img
 
 import (
-	"bytes"
 	"encoding/base64"
 	"fmt"
 	"image"
 	"image/draw"
 	"image/jpeg"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,7 +16,6 @@ import (
 
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/disintegration/gift"
-	"github.com/h2non/bimg"
 	"gopkg.in/yaml.v3"
 )
 
@@ -52,28 +49,17 @@ func NewImg(endpoint string) (Image, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	src, _, err := image.Decode(resp.Body)
 	if err != nil {
 		return img, err
 	}
 
-	newImage, err := bimg.NewImage(body).Resize(2560, 1440)
-	if err != nil {
-		return img, err
-	}
-
-	if bimg.NewImage(newImage).Type() == "jpg" {
-		fmt.Println(os.Stderr, "The image was converted into jpg")
-	}
-
-	reader := bytes.NewReader(newImage)
-	image, _, err := image.Decode(reader)
-	if err != nil {
-		return img, err
-	}
+	giftFilter := gift.Resize(2560, 1440, gift.LanczosResampling)
+	dst := image.NewRGBA(giftFilter.Bounds(src.Bounds()))
+	giftFilter.Draw(dst, src, nil)
 
 	img.prefix = "img"
-	img.data = image
+	img.data = dst
 	if strings.Contains(endpoint, "cataas") {
 		img.prefix = "cat"
 	}
@@ -108,7 +94,6 @@ type Config struct {
 }
 
 func (i Image) Send() error {
-	fmt.Println("running")
 	f, err := os.ReadFile(".yaml")
 	if err != nil {
 		return err
@@ -120,17 +105,13 @@ func (i Image) Send() error {
 		return err
 	}
 
-	fmt.Println("running")
-
 	v := url.Values{}
 
 	api := anaconda.NewTwitterApiWithCredentials(c.AccessToken, c.AccessSecret, c.ApiKey, c.ApiSecret)
-	t, err := api.PostTweet(i.file_location, nil)
+	/* t, err := api.PostTweet("", nil)
 	if err != nil {
 		return err
-	}
-	fmt.Println(t)
-	fmt.Println("running")
+	} */
 	data, err := os.ReadFile(i.file_location)
 	if err != nil {
 		return err
@@ -141,13 +122,15 @@ func (i Image) Send() error {
 		return err
 	}
 
-	fmt.Println(mediaResponse.MediaID)
-
 	v.Set("media_ids", strconv.FormatInt(mediaResponse.MediaID, 10))
 	v.Set("in_reply_to_status_id", mediaResponse.MediaIDString)
 
-	tweetString := fmt.Sprintf("@%s", t.User.ScreenName)
-	_, err = api.PostTweet(tweetString, v)
+	// tweetString := fmt.Sprintf("@%s", t.User.ScreenName)
+	// _, err = api.PostTweet(tweetString, v)
+	// if err != nil {
+	// 	return err
+	// }
+	_, err = api.PostTweet("", v)
 	if err != nil {
 		return err
 	}

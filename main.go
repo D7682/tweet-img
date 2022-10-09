@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image-manipulation/img"
 	"image-manipulation/utils"
 	"log"
@@ -34,6 +35,7 @@ func RandomSeed() int {
 
 func main() {
 	// UI()
+	start := time.Now()
 	urls := []string{
 		"https://picsum.photos/2560/1440",
 		"https://thecatapi.com/api/images/get?format=src&type=image&mime_types=jpg&size=full",
@@ -61,7 +63,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	time.Sleep(time.Second * 1)
 	err = joined.Write()
 	if err != nil {
 		log.Fatal(err)
@@ -71,4 +72,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("Elapsed: %v\n", time.Since(start))
 }

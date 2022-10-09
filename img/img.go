@@ -56,7 +56,9 @@ func NewImg(endpoint string) (Image, error) {
 
 	giftFilter := gift.Resize(2560, 1440, gift.LanczosResampling)
 	dst := image.NewRGBA(giftFilter.Bounds(src.Bounds()))
-	giftFilter.Draw(dst, src, nil)
+	giftFilter.Draw(dst, src, &gift.Options{
+		Parallelization: true,
+	})
 
 	img.prefix = "img"
 	img.data = dst
@@ -153,11 +155,12 @@ func Join(img1, img2 Image) (*Image, error) {
 	draw.Draw(rgba, r2, img2.data, image.Point{0, 0}, draw.Src)
 
 	g := gift.New(
+		gift.Resize(2560, 1440, gift.LanczosResampling),
 		gift.Invert(),
 		gift.Gamma(0.5),
 	)
 
-	dstImage := image.NewRGBA(rgba.Bounds())
+	dstImage := image.NewRGBA(g.Bounds(rgba.Bounds()))
 	g.Draw(dstImage, rgba)
 
 	// Draw the fgImage over the dstImage at the (100, 100) position

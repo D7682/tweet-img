@@ -38,6 +38,7 @@ func main() {
 	start := time.Now()
 	urls := []string{
 		"https://picsum.photos/2560/1440",
+		// "https://picsum.photos/2560/1440",
 		"https://thecatapi.com/api/images/get?format=src&type=image&mime_types=jpg&size=full",
 		//"https://cataas.com/cat?width=2560&height=1440",
 		// "https://picsum.photos/1920/1080",

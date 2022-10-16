@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"image-manipulation/img"
-	"image-manipulation/utils"
+	"image-manipulation/pkg/client"
+	"image-manipulation/pkg/img"
 	"log"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -33,6 +34,9 @@ func RandomSeed() int {
 	w.ShowAndRun()
 } */
 
+// Create a save option for a function so that a person is able to easily decide
+// if they want to save an image as well or not.
+
 func main() {
 	// UI()
 	start := time.Now()
@@ -44,27 +48,28 @@ func main() {
 		// "https://picsum.photos/1920/1080",
 	}
 
-	seed := RandomSeed()
-	currentURL := urls[seed]
+	client := client.NewClient()
 
-	utils.Examples()
+	var wg sync.WaitGroup
 
-	img1, err := img.NewImg(currentURL)
-	if err != nil {
-		log.Fatal(err)
+	var images [2]img.Image
+
+	for i := 0; i <= 1; i++ {
+		wg.Add(1)
+		go func(i int) {
+			seed := RandomSeed()
+			currentURL := urls[seed]
+			img, err := client.NewImg(currentURL)
+			if err != nil {
+				log.Fatal(err)
+			}
+			images[i] = img
+			defer wg.Done()
+		}(i)
 	}
+	wg.Wait()
 
-	img2, err := img.NewImg(currentURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	joined, err := img.Join(img1, img2)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = joined.Write()
+	joined, err := img.Join(images[0], images[1])
 	if err != nil {
 		log.Fatal(err)
 	}

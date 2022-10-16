@@ -1,17 +1,17 @@
 package img
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"image"
+	"image-manipulation/pkg/utils"
 	"image/draw"
 	"image/jpeg"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/ChimeraCoder/anaconda"
@@ -20,9 +20,17 @@ import (
 )
 
 type Image struct {
-	file_location string
-	data          image.Image
-	prefix        string
+	FileLocation string
+	Data         image.Image
+	Prefix       string
+}
+
+type Config struct {
+	ApiKey       string `yaml:"api_key"`
+	ApiSecret    string `yaml:"api_secret"`
+	BearerToken  string `yaml:"bearer_token"`
+	AccessToken  string `yaml:"access_token"`
+	AccessSecret string `yaml:"access_secret"`
 }
 
 // GenFile will generate a file with a random name for use
@@ -37,62 +45,23 @@ func GenFile(dir, imgPrefix string) (string, *os.File, error) {
 	return filepath.Join(dir, fileName), f, nil
 }
 
-func NewImg(endpoint string) (Image, error) {
-	var img Image
-	client := http.Client{
-		Timeout: time.Second * 10,
-	}
-
-	resp, err := client.Get(endpoint)
-	if err != nil {
-		return img, err
-	}
-	defer resp.Body.Close()
-
-	src, _, err := image.Decode(resp.Body)
-	if err != nil {
-		return img, err
-	}
-
-	giftFilter := gift.Resize(2560, 1440, gift.LanczosResampling)
-	dst := image.NewRGBA(giftFilter.Bounds(src.Bounds()))
-	giftFilter.Draw(dst, src, &gift.Options{
-		Parallelization: true,
-	})
-
-	img.prefix = "img"
-	img.data = dst
-	if strings.Contains(endpoint, "cataas") {
-		img.prefix = "cat"
-	}
-
-	return img, nil
-}
-
 func (i *Image) Write() error {
-	fileName, file, err := GenFile("examples", i.prefix)
+	utils.Examples()
+	fileName, file, err := GenFile("examples", i.Prefix)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	i.file_location = fileName
+	i.FileLocation = fileName
 
 	var opt jpeg.Options
 	opt.Quality = 100
 
-	err = jpeg.Encode(file, i.data, &opt)
+	err = jpeg.Encode(file, i.Data, &opt)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-type Config struct {
-	ApiKey       string `yaml:"api_key"`
-	ApiSecret    string `yaml:"api_secret"`
-	BearerToken  string `yaml:"bearer_token"`
-	AccessToken  string `yaml:"access_token"`
-	AccessSecret string `yaml:"access_secret"`
 }
 
 func (i Image) Send() error {
@@ -114,10 +83,13 @@ func (i Image) Send() error {
 	if err != nil {
 		return err
 	} */
-	data, err := os.ReadFile(i.file_location)
+
+	buf := new(bytes.Buffer)
+	err = jpeg.Encode(buf, i.Data, nil)
 	if err != nil {
 		return err
 	}
+	data := buf.Bytes()
 
 	mediaResponse, err := api.UploadMedia(base64.StdEncoding.EncodeToString(data))
 	if err != nil {
@@ -140,22 +112,19 @@ func (i Image) Send() error {
 }
 
 func Join(img1, img2 Image) (*Image, error) {
-	// starting position of the second image (bottom left)
-	sp2 := image.Point{img1.data.Bounds().Dx(), 0}
-
-	// new rectangle for the second image
-	r2 := image.Rectangle{sp2, sp2.Add(img2.data.Bounds().Size())}
-
-	// rectangle for the big image
-	r := image.Rectangle{image.Point{0, 0}, r2.Max}
-
+	// rectangle for view
+	r := image.Rectangle{image.Point{0, 0}, image.Point{img1.Data.Bounds().Dx() + img2.Data.Bounds().Dx(), img1.Data.Bounds().Dy()}}
 	rgba := image.NewRGBA(r)
 
-	draw.Draw(rgba, img1.data.Bounds(), img1.data, image.Point{0, 0}, draw.Src)
-	draw.Draw(rgba, r2, img2.data, image.Point{0, 0}, draw.Src)
+	// locations on the rgba rectangle that each image will be drawn at.
+	sp1 := image.Rectangle{rgba.Bounds().Min, image.Point{rgba.Bounds().Max.X / 2, rgba.Bounds().Max.Y}}
+	sp2 := image.Rectangle{image.Point{rgba.Bounds().Max.X / 2, 0}, rgba.Bounds().Max}
 
+	draw.Draw(rgba, sp1, img1.Data, image.Point{0, 0}, draw.Src)
+	draw.Draw(rgba, sp2, img2.Data, image.Point{0, 0}, draw.Src)
+
+	// Add The Image Filter, etc. with the gift library.
 	g := gift.New(
-		gift.Resize(2560, 1440, gift.LanczosResampling),
 		gift.Invert(),
 		gift.Gamma(0.5),
 	)
@@ -163,7 +132,5 @@ func Join(img1, img2 Image) (*Image, error) {
 	dstImage := image.NewRGBA(g.Bounds(rgba.Bounds()))
 	g.Draw(dstImage, rgba)
 
-	// Draw the fgImage over the dstImage at the (100, 100) position
-
-	return &Image{data: dstImage, prefix: img1.prefix}, nil
+	return &Image{Data: dstImage, Prefix: img1.Prefix}, nil
 }

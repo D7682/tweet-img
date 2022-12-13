@@ -1,4 +1,4 @@
 *.yaml
 tweet-img
-*/*.exe
+*.exe
 examples/

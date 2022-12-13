@@ -28,7 +28,7 @@ type ImageClient struct {
 func NewClient() (*ImageClient, error) {
 	f, err := os.ReadFile("../../.yaml")
 	if err != nil {
-		return nil, errors.New("Error in reading the configuration file")
+		return nil, errors.New("Error in reading the configuration file, try adding .yaml file in home directory")
 	}
 
 	var conf config.Config

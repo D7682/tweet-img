@@ -28,13 +28,13 @@ type ImageClient struct {
 func NewClient() (*ImageClient, error) {
 	f, err := os.ReadFile("../../.yaml")
 	if err != nil {
-		return nil, errors.New("Error in reading the configuration file, try adding .yaml file in home directory")
+		return nil, errors.New("error in reading the configuration file, try adding .yaml file in home directory")
 	}
 
 	var conf config.Config
 	err = yaml.Unmarshal(f, &conf)
 	if err != nil {
-		return nil, errors.New("Error in parsing the configuration file")
+		return nil, errors.New("error in parsing the configuration file")
 	}
 
 	c := &http.Client{

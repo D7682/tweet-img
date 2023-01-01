@@ -48,7 +48,7 @@ func main() {
 		// "https://picsum.photos/1920/1080",
 	}
 
-	client, err := client.NewClient()
+	c, err := client.NewClient()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,11 +62,11 @@ func main() {
 		go func(i int) {
 			seed := RandomSeed()
 			currentURL := urls[seed]
-			img, err := client.NewImg(currentURL)
+			newImage, err := c.NewImg(currentURL)
 			if err != nil {
 				log.Fatal(err)
 			}
-			images[i] = img
+			images[i] = newImage
 			defer wg.Done()
 		}(i)
 	}
@@ -77,7 +77,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = client.Send(*joined)
+	err = c.Send(*joined)
 	if err != nil {
 		log.Fatal(err)
 	}
